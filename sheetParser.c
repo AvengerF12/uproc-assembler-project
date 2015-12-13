@@ -1,52 +1,22 @@
+#include "xmlParser.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <zip.h>
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <libxml/xmlreader.h>
-
 
 char *read_zip_content(char *);
-static void print_element_names(xmlNode * a_node);
 
 
 int main(int argc, char *argv[])
 {
     char *xml_content = read_zip_content(argv[1]);
 
-    xmlDoc *doc = xmlReadMemory(xml_content, strlen(xml_content) * sizeof(char) + 1, "content.xml", NULL, 0);
-
-    xmlTextReaderPtr reader = xmlReaderWalker(doc);
-
-    xmlNode *root_element = NULL;
-
-    root_element = xmlDocGetRootElement(doc);
-
-    print_element_names(root_element);
-
-    xmlFreeDoc(doc);
-
-    xmlCleanupParser();
-
+    streamDoc(xml_content);
 
     return 0;
-}
-
-
-static void print_element_names(xmlNode * a_node)
-{
-        xmlNode *cur_node = NULL;
-
-    for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
-        if (cur_node->type == XML_TEXT_NODE) {
-            printf("node type: Element, name: %s\n", cur_node->name);
-        }
-
-        print_element_names(cur_node->children);
-    }
 }
 
 
