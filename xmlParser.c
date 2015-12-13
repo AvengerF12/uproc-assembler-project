@@ -11,19 +11,12 @@ static int get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute);
 
 
 static const int table_addr_cell = 1;
-static const int table_opcode_cell = 45;
-
-
-static char ***table_content = NULL;
+static const int table_opcode_cell[] = {45,46,48,49,51,52,54,55};
 
 
 static int table_count = 0;
 static int cell_count = 0;
 static int row_count = 0;
-
-
-static int row_tag_state = 0;
-static int cell_tag_state = 0;
 
 
 void streamDoc(char *xml_buffer) {
@@ -67,6 +60,7 @@ void streamDoc(char *xml_buffer) {
 static void processNode(xmlTextReaderPtr reader)
 {
     const xmlChar *name, *value;
+	int type = xmlTextReaderNodeType(reader);
 
     name = xmlTextReaderConstName(reader);
 
@@ -80,52 +74,33 @@ static void processNode(xmlTextReaderPtr reader)
 		table_count++;
 	}
 
-	if(strcmp(name, "table:table-row") == 0){
+	if(strcmp(name, "table:table-row") == 0 && type != XML_READER_TYPE_END_ELEMENT){
 
-		if(row_tag_state == 0){
-			const int attr_value = get_attr_value_i(reader, "table:number-rows-repeated");
+		const int attr_value = get_attr_value_i(reader, "table:number-rows-repeated");
 
-			if(attr_value != 0){
-				row_count += attr_value;
-			} else {
-				row_count++;
-			}
-
-			cell_count = 0;
-			row_tag_state = 1;
-
+		if(attr_value != 0){
+			row_count += attr_value;
 		} else {
-			row_tag_state = 0;
+			row_count++;
 		}
+
+		cell_count = 0;
 	}
 
-	if(strcmp(name, "table:table-cell") == 0){
+	if(strcmp(name, "table:table-cell") == 0 && type != XML_READER_TYPE_END_ELEMENT){
 		const int attr_value = get_attr_value_i(reader, "table:number-columns-repeated");
 		
 		if(attr_value != 0){
 			cell_count += attr_value;
 		} else {
 			
-			if(cell_tag_state == 0){
-
 			cell_count++;
-   
-            cell_tag_state = 1;
-
-			} else {
-
-            cell_tag_state = 0;
-
-        	}
-			
 		}
 	}
 
 	if(strcmp(name, "#text") == 0){
-		//printf("%s %s %d %d %d\n", name, value, row_count, cell_count, xmlTextReaderNodeType(reader));
+		printf("%s %s %d %d \n", name, value, row_count, cell_count);
 	}
-
-	printf("%s %s %d %d %d\n", name, value, row_count, cell_count, xmlTextReaderNodeType(reader));
 
 }
 
