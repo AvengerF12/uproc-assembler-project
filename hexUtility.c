@@ -5,8 +5,35 @@
 
 // Convert the text into binary
 
+/*Takes an input file containing hex values as an argument and outputs a binary file with those same values. Nedeed to ease introduction of values inside LogicCircuit.*/
+
 void hexToBin(char *inFileName, char *outFileName);
 void binToHex(char *inFileName, char *outFileName);
+
+
+int main (int argc, char *argv[])
+{
+    char * inputFile = argv[2];
+    char * outputFile = argv[3];
+    
+    if(argc < 4){
+        printf("Incorrect arguments. Insert an option (-d to decrypt and -e to encrypt) the input file and the output file");
+        return 0;
+    }
+
+    
+    switch(argv[1][1]){
+        case 'e':
+            hexToBin(inputFile, outputFile);
+            break;
+        case 'd':
+            binToHex(inputFile, outputFile);
+            break;
+    }
+    
+
+    return 0;
+}
 
 
 // No more memory errors/leaks...
