@@ -6,7 +6,7 @@
 
 #define N_OP_ADD_CELLS 9
 
-int *streamDoc(char *xml_buffer);
+int **streamDoc(char *xml_buffer);
 static int processNode(xmlTextReaderPtr reader);
 static int get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute);
 static xmlTextReaderPtr read_next_text_elem(xmlTextReaderPtr reader);
@@ -17,8 +17,8 @@ static xmlDoc *doc = NULL;
 static const int table_addr_cell = 1;
 static const int table_opcode_cell[] = {45,46,48,49,51,52,54,55};
 
-static const size_t table_size = sizeof(int) * N_OP_ADD_CELLS;
-int (*table_op_addr_cont)[N_OP_ADD_CELLS] = {NULL}; 
+static const size_t row_size = sizeof(int) * N_OP_ADD_CELLS;
+int **table_op_addr_cont= NULL; 
 
 static int table_count = 0;
 static int cell_count = 0;
@@ -26,14 +26,16 @@ static int row_count = 0;
 
 
 // Parses each element of the first xml table
-int *streamDoc(char *xml_buffer) {
+int **streamDoc(char *xml_buffer) {
 	
 	doc = xmlReadMemory(xml_buffer, strlen(xml_buffer) * sizeof(char), "content.xml", NULL, 0);
 
-	table_op_addr_cont = malloc(table_size*0);
+	table_op_addr_cont = NULL;
 
     xmlTextReaderPtr reader;
     int ret;
+
+    // When set to 1 stops the loop
 	int stop_bit = 0;
 
     reader = xmlReaderWalker(doc);
@@ -110,10 +112,10 @@ static int processNode(xmlTextReaderPtr reader)
 		if(attr_value != 0){
 			xmlNodePtr attr_node = xmlTextReaderCurrentNode(reader);
 
-			// This if handles the attribute repetition on cells
+			// This 'if' handles the attribute repetition on cells
 			if(xmlChildElementCount(attr_node) != 0){
-				int op_pos = -1;
 
+				int op_pos = 0;
 				if(op_pos = check_if_opcode(cell_count+1) != -1){
 
 					xmlTextReaderPtr tmp = read_next_text_elem(reader);
@@ -138,14 +140,16 @@ static int processNode(xmlTextReaderPtr reader)
 		if(table_addr_cell == cell_count){
 			
 			// Increase the size of the array for each line with a valid address code
-			int (*temp_p)[N_OP_ADD_CELLS] = realloc(table_op_addr_cont, table_size*row_count);
+			int **temp_p = realloc(table_op_addr_cont, sizeof(int*)*row_count);
+            temp_p[row_count-1] = malloc(row_size);
 			table_op_addr_cont = temp_p;
 
+            // Registers new value in the table
 			table_op_addr_cont[row_count-1][cell_count-1] = strtol(value, NULL, 16);
 			printf("addr: %X %d %d \n", table_op_addr_cont[row_count-1][cell_count-1], row_count, cell_count);
 		}
 
-		int op_pos = -1;
+		int op_pos = 0;
 		if(op_pos = check_if_opcode(cell_count) != -1){
 			table_op_addr_cont[row_count-1][op_pos+1] = strtol(value, NULL, 16);
 			printf("%X %d %d\n", table_op_addr_cont[row_count-1][op_pos+1], row_count, cell_count);
@@ -169,6 +173,7 @@ static int check_if_opcode(int cell_pos)
 }
 
 
+// Reads the next text element without moving the main reader pointer
 static xmlTextReaderPtr read_next_text_elem(xmlTextReaderPtr reader)
 {
 	xmlTextReaderPtr tmp_reader = xmlReaderWalker(doc);
