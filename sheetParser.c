@@ -14,7 +14,11 @@ int main(int argc, char *argv[])
 {
     char *xml_content = read_zip_content(argv[1]);
 
-    streamDoc(xml_content);
+    int **xml_table = streamDoc(xml_content);
+
+    
+
+    free(xml_content);
 
     return 0;
 }
