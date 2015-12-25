@@ -10,11 +10,12 @@
 #define MAX_REPEAT_ALLOWED 100
 
 int **streamDoc(char *xml_buffer);
-static int processNode(xmlTextReaderPtr reader);
+int free_xml_table(int ***xml_table_ptr);
+static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont);
 static int read_next_text_elem(xmlTextReaderPtr reader);
-static long get_text_value(xmlTextReaderPtr xml_reader);
-static long get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute);
-static long check_if_opcode(long cell_pos);
+static int get_text_value(xmlTextReaderPtr xml_reader);
+static int get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute);
+static int check_if_opcode(int cell_pos);
 static int check_valid_string(const xmlChar *string);
 
 static xmlDoc *doc = NULL;
@@ -24,11 +25,10 @@ static const int table_addr_cell = 1;
 static const int table_opcode_cell[] = {45,46,48,49,51,52,54,55};
 
 static const size_t row_size = sizeof(int) * N_OP_ADD_CELLS;
-int **table_op_addr_cont= NULL; 
 
-static long table_count = 0;
-static long cell_count = 0;
-static long row_count = 0;
+static int table_count = 0;
+static int cell_count = 0;
+static int row_count = 0;
 
 static int addr_row_count = 0;
 static int row_is_valid = 0;
@@ -40,9 +40,6 @@ int **streamDoc(char *xml_buffer) {
 	doc = xmlReadMemory(xml_buffer, strlen(xml_buffer) * sizeof(char), "content.xml", NULL, 0);
 
 	int **table_op_addr_cont= NULL;
-
-	table_op_addr_cont = malloc(sizeof(int*));
-    table_op_addr_cont[0] = malloc(row_size);
 
     xmlTextReaderPtr reader;
     int ret;
@@ -61,7 +58,7 @@ int **streamDoc(char *xml_buffer) {
 				break;
 			}
 
-            stop_bit = processNode(reader);
+            stop_bit = processNode(reader, &table_op_addr_cont);
             ret = xmlTextReaderRead(reader);
         }   
 
@@ -79,15 +76,16 @@ int **streamDoc(char *xml_buffer) {
 
     xmlCleanupParser();
 
+
 	return table_op_addr_cont;
 }
 
 
-static int processNode(xmlTextReaderPtr reader)
+static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
 {
     const xmlChar *name;
 	int type = xmlTextReaderNodeType(reader);
-	long value;
+	int value = 0;
 
     name = xmlTextReaderConstName(reader);
 
@@ -97,13 +95,13 @@ static int processNode(xmlTextReaderPtr reader)
 
 	if(strcmp(name, "table:table") == 0){
 		table_count++;
-		printf("Table n: %d\n", table_count);
+//		printf("Table n: %d\n", table_count);
 	}
 
 	// Count the number of rows in the current table and reset the number of cells each time
     else if(strcmp(name, "table:table-row") == 0 && type != XML_READER_TYPE_END_ELEMENT){
 
-		const long attr_value = get_attr_value_i(reader, "table:number-rows-repeated");
+		const int attr_value = get_attr_value_i(reader, "table:number-rows-repeated");
 
 		if(attr_value < MAX_REPEAT_ALLOWED){
 			row_count += attr_value;
@@ -118,7 +116,7 @@ static int processNode(xmlTextReaderPtr reader)
 	}
 
 	else if(strcmp(name, "table:covered-table-cell") == 0 && type != XML_READER_TYPE_END_ELEMENT){
-		const long attr_value = get_attr_value_i(reader, "table:number-columns-repeated");
+		const int attr_value = get_attr_value_i(reader, "table:number-columns-repeated");
 		// Space that it extends for +1 for itself
 		cell_count += attr_value + 1;
 //		printf("Covered, %d\n", cell_count);
@@ -128,7 +126,7 @@ static int processNode(xmlTextReaderPtr reader)
     else if(strcmp(name, "table:table-cell") == 0 && type != XML_READER_TYPE_END_ELEMENT){
 
         // Number of attributes
-		const long attr_value = get_attr_value_i(reader, "table:number-columns-repeated");
+		const int attr_value = get_attr_value_i(reader, "table:number-columns-repeated");
 		int op_pos = 0;
 
 		cell_count+=attr_value;
@@ -144,13 +142,23 @@ static int processNode(xmlTextReaderPtr reader)
 
             	addr_row_count++;
             	// Increase the size of the array for each line with a valid address code
-            	int **temp_p = realloc(table_op_addr_cont, sizeof(int*)*addr_row_count);
+            	int **temp_p = realloc(*table_op_addr_cont, sizeof(int*)*addr_row_count);
+                if(temp_p == NULL){
+                    fprintf(stderr, "Unexpected behaviour: realloc");
+                    exit(4);
+                }
             	temp_p[addr_row_count-1] = malloc(row_size);
-            	table_op_addr_cont = temp_p;
+
+                // Initialise integers
+                for(int i=0;i<N_OP_ADD_CELLS;i++){
+                    temp_p[addr_row_count-1][i] = 0;
+                }
+
+            	*table_op_addr_cont = temp_p;
 
             	// Registers new value in the table
-            	table_op_addr_cont[addr_row_count-1][table_addr_cell-1] = value;
-            	printf("a:%X %d %d\n",table_op_addr_cont[addr_row_count-1][table_addr_cell-1], row_count, cell_count);
+            	(*table_op_addr_cont)[addr_row_count-1][table_addr_cell-1] = value;
+            	printf("a:%X %d %d\n",(*table_op_addr_cont)[addr_row_count-1][table_addr_cell-1], row_count, cell_count);
 			}
         }	
 
@@ -168,10 +176,9 @@ static int processNode(xmlTextReaderPtr reader)
 
             if(value == -1){
 				exit(3);
-                printf("Skip\n");
             }
 
-        	table_op_addr_cont[addr_row_count-1][op_pos+1] = value;
+        	(*table_op_addr_cont)[addr_row_count-1][op_pos+1] = value;
 
 
 			// If the column is repeated in the opcode section then first write the second number and then the first
@@ -181,22 +188,22 @@ static int processNode(xmlTextReaderPtr reader)
 
 //				printf("Calling 2: %d %d\n", op_pos, attr_value);
 				// Write first number of the two that compose the opcode
-				table_op_addr_cont[addr_row_count-1][op_pos] = value;
+				(*table_op_addr_cont)[addr_row_count-1][op_pos] = value;
 
 
-				printf("%X %d %d \n", table_op_addr_cont[addr_row_count-1][op_pos+2], row_count, cell_count-1);
+				printf("%X %d %d \n", (*table_op_addr_cont)[addr_row_count-1][op_pos+2], row_count, cell_count-1);
 			}
 
-			printf("%X %d %d \n", table_op_addr_cont[addr_row_count-1][op_pos+1], row_count, cell_count);
+			printf("%X %d %d \n", (*table_op_addr_cont)[addr_row_count-1][op_pos+1], row_count, cell_count);
 
-		}		
+		}
 	}
 
 	return 0;
 }
 
 
-static long check_if_opcode(long cell_pos)
+static int check_if_opcode(int cell_pos)
 {
 	for(int i=0;i<N_OP_ADD_CELLS-1;i++){
         if(table_opcode_cell[i] == cell_pos){
@@ -228,7 +235,7 @@ static int read_next_text_elem(xmlTextReaderPtr xml_reader)
         }
 
 		else if(strcmp(name, "table:table-cell") == 0 && type != XML_READER_TYPE_END_ELEMENT){
-			long n_cell = get_attr_value_i(xml_reader, "table:number-columns-repeated");
+			int n_cell = get_attr_value_i(xml_reader, "table:number-columns-repeated");
 			cell_count+=n_cell;
 		}
 	
@@ -245,14 +252,16 @@ static int read_next_text_elem(xmlTextReaderPtr xml_reader)
 }
 
 
-static long get_text_value(xmlTextReaderPtr xml_reader)
+static int get_text_value(xmlTextReaderPtr xml_reader)
 {
     xmlChar *attr_value = xmlTextReaderGetAttribute(xml_reader, "office:value");
 	xmlChar *value_type = xmlTextReaderGetAttribute(xml_reader, "office:value-type");
 
-	long result = 0;
+	int result = 0;
 
 	if(value_type == NULL){
+        xmlFree(attr_value);
+        xmlFree(value_type);
 		return -1;
 	}
 
@@ -261,6 +270,8 @@ static long get_text_value(xmlTextReaderPtr xml_reader)
 		const xmlChar *value = xmlTextReaderConstValue(xml_reader);
 	
 		if(check_valid_string(value) == -1){
+            xmlFree(attr_value);
+            xmlFree(value_type);
 			return -1;
 		}
 
@@ -268,6 +279,8 @@ static long get_text_value(xmlTextReaderPtr xml_reader)
 
     } else if(strcmp(value_type, "float") == 0){
     	if(attr_value == NULL){
+            xmlFree(attr_value);
+            xmlFree(value_type);
 			return -1;
 		}
 
@@ -278,7 +291,7 @@ static long get_text_value(xmlTextReaderPtr xml_reader)
 //	printf("Value:%s, %X\n", attr_value, result);	
 
 	if(strcmp(value_type, "string") != 0 && strcmp(attr_value,"0") != 0 && result == 0){
-		printf("Unexpected behaviour: error in conversion");
+		fprintf(stderr, "Unexpected behaviour: error in conversion");
 		exit(2);
 	}
 
@@ -290,10 +303,10 @@ static long get_text_value(xmlTextReaderPtr xml_reader)
 }
 
 
-static long get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute)
+static int get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute)
 {
 	xmlChar *attr_value = xmlTextReaderGetAttribute(reader, attribute);
-	long attr_int = 0;
+	int attr_int = 0;
 	
 	if(attr_value != NULL){
 
@@ -324,13 +337,14 @@ static int check_valid_string(const xmlChar *string)
 }
 
 
-int free_xml_table(int **xml_table_ptr)
+int free_xml_table(int ***xml_table_ptr)
 {
-    for(int i=0;i<addr_row_count;i++){
-        free(xml_table_ptr[i]);
+    for(int i=addr_row_count;i!=0;i--){
+//        printf("%d/%d/Value:%X\n",i,addr_row_count-1, (*xml_table_ptr)[i]);
+        free((*xml_table_ptr)[i]);
     }
 
-    free(xml_table_ptr);
+    free(*xml_table_ptr);
 
     return 0;
 }

@@ -12,11 +12,14 @@ char *read_zip_content(char *);
 
 int main(int argc, char *argv[])
 {
+
     char *xml_content = read_zip_content(argv[1]);
 
     int **xml_table = streamDoc(xml_content);
 
-    
+    printf("%X\n",xml_table[3][0]);
+
+    free_xml_table(&xml_table);
 
     free(xml_content);
 
@@ -27,12 +30,14 @@ int main(int argc, char *argv[])
 char *read_zip_content(char *zip_name)
 {
     int err = 0;
+    const char *f_to_read = "content.xml";
+    char *content_data = NULL;
+
     zip_t *z_file = zip_open(zip_name, ZIP_RDONLY, &err);
     if(z_file == NULL) {fputs("Cannot open zip file", stderr);}
 
-    char *f_to_read = "content.xml";
-
     struct zip_stat content_stat;
+    zip_stat_init(&content_stat);
 
     int f_stat_r = zip_stat(z_file, f_to_read, 0, &content_stat);
     if(f_stat_r == -1) {fputs("Cannot get stats", stderr);}
@@ -40,7 +45,7 @@ char *read_zip_content(char *zip_name)
     zip_file_t *f_content = zip_fopen(z_file, f_to_read, ZIP_FL_UNCHANGED);
     if(f_content == NULL) {fputs("Cannot open content file", stderr);}
 
-    char *content_data = malloc(sizeof(char)*content_stat.size + 1);
+    content_data = malloc(sizeof(char)*content_stat.size + 1);
 
     zip_fread(f_content, content_data, content_stat.size);
 
