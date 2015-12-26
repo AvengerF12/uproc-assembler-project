@@ -1,2 +1,4 @@
-void hexToBin(char *inFileName, char *outFileName);
-void binToHex(char *inFileName, char *outFileName);
+#include <stdlib.h>
+
+int hex_to_bin(char *i_buffer, char *o_file_name);
+//void binToHex(char *inFileName, char *outFileName);

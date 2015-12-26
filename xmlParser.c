@@ -168,7 +168,7 @@ static int processNode(xmlTextReaderPtr reader, struct opcode_table *xml_content
 
             	// Registers new value in the table
             	(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][table_addr_cell-1] = value;
-            	printf("a:%X %d %d\n",(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][table_addr_cell-1], row_count, cell_count);
+//            	printf("a:%X %d %d\n",(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][table_addr_cell-1], row_count, cell_count);
 			}
         }	
 
@@ -177,7 +177,6 @@ static int processNode(xmlTextReaderPtr reader, struct opcode_table *xml_content
 		// This 'if' handles the attribute repetition on opcode cells
 		if(row_is_valid && attr_value < MAX_REPEAT_ALLOWED && op_pos != -1){
 
-//			printf("Cells:%d, Rows:%d, Addr:%d\n", cell_count, row_count, table_op_addr_cont[addr_row_count-1][0]);
 //			printf("N attr: %d, %s\n", xmlTextReaderAttributeCount(reader), xmlTextReaderReadOuterXml(reader));
 
 //			printf("Calling 1: %d\n", op_pos);
@@ -201,10 +200,10 @@ static int processNode(xmlTextReaderPtr reader, struct opcode_table *xml_content
 				(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos] = value;
 
 
-				printf("%X %d %d \n", (xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos], row_count, cell_count-1);
+//				printf("%X %d %d \n", (xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos], row_count, cell_count-1);
 			}
 
-			printf("%X %d %d \n", (xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos+1], row_count, cell_count);
+//			printf("%X %d %d \n", (xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos+1], row_count, cell_count);
 
 		}
 	}
@@ -350,7 +349,6 @@ static int check_valid_string(const xmlChar *string)
 int free_xml_table(struct opcode_table **xml_content)
 {
     for(int i=0;i<(*xml_content)->addr_row_count;i++){
-//        printf("%d/%d/Value:%X\n",i,addr_row_count-1, (*xml_table_ptr)[i]);
         free((*xml_content)->xml_table_content[i]);
     }
 

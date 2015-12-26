@@ -19,9 +19,37 @@ int main(int argc, char *argv[])
 
     struct opcode_table *xml_table = streamDoc(xml_content);
 
+    int row_count = xml_table->addr_row_count;
+    int cell_per_row = xml_table->n_cell_per_row;
+
+    int buffer_size = row_count * cell_per_row;
+    int buffer_index = 0;
+    char *hex_buffer = calloc(sizeof(char) + 1, buffer_size); // + 1 is needed for '\0' and spaces between numbers
+
+
+    // Convert the table into a single string of values
+    for(int i=0;i<row_count;i++){
+        for(int k=0;k<cell_per_row;k++){
+            if(k==0){
+                hex_buffer[buffer_index] = '\n';
+            } else {
+                char *ch = malloc(sizeof(char)+1);
+                snprintf(ch, 2, "%X\n", xml_table->xml_table_content[i][k]);
+                hex_buffer[buffer_index] = ch[0];
+                free(ch);
+            }
+
+            buffer_index++;
+        }
+    }
+
+    hex_buffer[buffer_size*2-1] = '\0';
+
+    hex_to_bin(argv[2], hex_buffer);
+
+    free(hex_buffer);
 
     free_xml_table(&xml_table);
-
     free(xml_content);
 
     return 0;

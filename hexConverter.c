@@ -5,86 +5,99 @@
 
 // Convert the text into binary
 
-void hexToBin(char *inFileName, char *outFileName);
-void binToHex(char *inFileName, char *outFileName);
+static int file_write_b(char *o_file_name, int *buffer, size_t size);
+int hex_to_bin(char *i_buffer, char *o_file_name);
+//void binToHex(char *inFileName, char *outFileName);
 
-
-// No more memory errors/leaks...
-void hexToBin(char *inFileName, char *outFileName)
+/*
+char *file_read(char *i_file_name, char *r_options)
 {
-    
-    FILE * inFile = NULL;
-    FILE * outFile = NULL;
+    // Input file
+    FILE * i_file = NULL;
 
-    char * inBuffer = NULL;
-    int * outBuffer = NULL;
+    char *buffer = NULL;
 
     size_t result;
-    long lSize;
+    long l_size;
 
-    inFile = fopen ( inFileName , "r+" );
-    if (inFile==NULL) {fputs ("File error",stderr); exit (1);}
+    inFile = fopen (i_file_name, r_options);
+    if (i_file==NULL) {fputs ("File error",stderr); exit (1);}
 
     // obtain file size:
-    fseek (inFile , 0 , SEEK_END);
-    lSize = ftell (inFile);
-    rewind (inFile);
-    
-    // allocate memory to contain the whole file:
-    inBuffer = (char*) malloc (sizeof(char)*lSize + 1); // 1 needed for \0
-    if (inBuffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+    fseek (i_file, 0 , SEEK_END);
+    l_size = ftell (i_file);
+    rewind (i_file);
+
+    buffer = calloc(sizeof(char), l_size + 1);
 
     // copy the file into the buffer:
-    result = fread (inBuffer,1,lSize,inFile);
-    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
-    
-    inBuffer[lSize] = '\0';
+    result = fread (buffer, 1, l_size, i_file);
+    if (result != l_size) {fputs ("Reading error",stderr); exit (3);}
 
-    fclose (inFile);
+    buffer[l_size] = '\0';
 
+    fclose(i_file);
 
-    outFile = fopen (outFileName, "wb+");
-    if (outFile == NULL) {fputs ("File error", stderr); exit(4);}
+    return buffer;
+}
 
-    char *pEnd = NULL;
-
-    int nHex = 0;
-    int isSameNumber = 0;
+*/
 
 
-    for(int k = 0;k < lSize; k++){
-        if(isalnum(inBuffer[k]) && isSameNumber == 0){
-            nHex++;
-            isSameNumber = 1;
-        }
+static int file_write_b(char *o_file_name, int *buffer, size_t size)
+{
+    FILE * o_file = NULL;
 
-        while(isspace(inBuffer[k])){
-            k++;
-            isSameNumber = 0;
-        }
-    }
+    o_file = fopen (o_file_name, "wb+");
+    if (o_file == NULL) {fputs ("File error", stderr); exit(4);}
 
-    outBuffer = (int*) malloc(sizeof(int)*(nHex)); // Needs 4 byte of memory for each char because hex
-    if (outBuffer == NULL) {fputs ("Memory error",stderr); exit (5);}
+    fwrite(buffer, sizeof(int), size, o_file);
 
-    outBuffer[0] = strtol(inBuffer, &pEnd, 16);
+    fclose(o_file);
 
-    for(int i=1;i<nHex;i++){
-        outBuffer[i] = strtol(pEnd, &pEnd, 16);
-    }
-
-    fwrite(outBuffer, sizeof(int), nHex, outFile);
-
-    // terminate
-    free (inBuffer);
-    free (outBuffer);
-
-    fclose(outFile);
-
+    return 0;
 }
 
 
-// Don't touch, please... took a while to remove all the memory errors...
+// Takes an input buffer of hexes and converts them into binary
+int hex_to_bin(char *o_file_name, char *i_buffer)
+{
+    int l_buffer = strlen(i_buffer);
+
+    int *o_buffer = NULL;
+    char *p_end = NULL;
+
+    int n_hex = 0;
+    int is_same_number = 0;
+
+
+    for(int k = 0;k < l_buffer; k++){
+        if(isalnum(i_buffer[k]) && is_same_number == 0){
+            n_hex++;
+            is_same_number = 1;
+        }
+
+        while(isspace(i_buffer[k])){
+            k++;
+            is_same_number = 0;
+        }
+    }
+
+    o_buffer = malloc(sizeof(int)*(n_hex));
+    if (o_buffer == NULL) {fputs ("Memory error",stderr); exit (5);}
+
+    o_buffer[0] = strtol(i_buffer, &p_end, 16);
+
+    for(int i=1;i<n_hex;i++){
+        o_buffer[i] = strtol(p_end, &p_end, 16);
+    }
+
+    file_write_b(o_file_name, o_buffer, n_hex);
+
+    return 0;
+}
+
+/*
 void binToHex(char *inFileName, char *outFileName)
 {
     FILE * inFile = NULL;
@@ -112,7 +125,7 @@ void binToHex(char *inFileName, char *outFileName)
     result = fread (inBuffer, sizeof(int), lSize, inFile);
     if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
     
-    /* the whole file is now loaded in the memory buffer. */
+    // the whole file is now loaded in the memory buffer. 
 
     fclose (inFile);
 
@@ -143,3 +156,4 @@ void binToHex(char *inFileName, char *outFileName)
     fclose(outFile);
 
 }
+*/
