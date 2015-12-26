@@ -19,8 +19,6 @@ static int get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute);
 static int check_if_opcode(int cell_pos);
 static int check_valid_string(const xmlChar *string);
 
-static xmlDoc *doc = NULL;
-
 static const int table_addr_cell = 1;
 static const int table_opcode_cell[] = {45,46,48,49,51,52,54,55};
 
@@ -37,7 +35,7 @@ static int row_is_valid = 0;
 // Parses each element of the first xml table
 int **streamDoc(char *xml_buffer) {
 	
-	doc = xmlReadMemory(xml_buffer, strlen(xml_buffer) * sizeof(char), "content.xml", NULL, 0);
+	xmlDoc *doc = xmlReadMemory(xml_buffer, strlen(xml_buffer) * sizeof(char), "content.xml", NULL, 0);
 
 	int **table_op_addr_cont= NULL;
 
