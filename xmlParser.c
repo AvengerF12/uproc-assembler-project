@@ -9,6 +9,7 @@
 #define MAX_N_TABLES 1
 #define MAX_REPEAT_ALLOWED 100
 
+
 int **streamDoc(char *xml_buffer);
 int free_xml_table(int ***xml_table_ptr);
 static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont);
@@ -20,7 +21,6 @@ static int check_valid_string(const xmlChar *string);
 
 static xmlDoc *doc = NULL;
 
-static const int table_start_row = 9;
 static const int table_addr_cell = 1;
 static const int table_opcode_cell[] = {45,46,48,49,51,52,54,55};
 
@@ -143,10 +143,13 @@ static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
             	addr_row_count++;
             	// Increase the size of the array for each line with a valid address code
             	int **temp_p = realloc(*table_op_addr_cont, sizeof(int*)*addr_row_count);
+
                 if(temp_p == NULL){
                     fprintf(stderr, "Unexpected behaviour: realloc");
+                    free_xml_table(table_op_addr_cont);
                     exit(4);
                 }
+
             	temp_p[addr_row_count-1] = malloc(row_size);
 
                 // Initialise integers
@@ -165,7 +168,7 @@ static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
 		op_pos = check_if_opcode(cell_count);
 
 		// This 'if' handles the attribute repetition on opcode cells
-		if(row_is_valid && attr_value < MAX_REPEAT_ALLOWED && (op_pos != -1)){
+		if(row_is_valid && attr_value < MAX_REPEAT_ALLOWED && op_pos != -1){
 
 //			printf("Cells:%d, Rows:%d, Addr:%d\n", cell_count, row_count, table_op_addr_cont[addr_row_count-1][0]);
 //			printf("N attr: %d, %s\n", xmlTextReaderAttributeCount(reader), xmlTextReaderReadOuterXml(reader));
@@ -191,7 +194,7 @@ static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
 				(*table_op_addr_cont)[addr_row_count-1][op_pos] = value;
 
 
-				printf("%X %d %d \n", (*table_op_addr_cont)[addr_row_count-1][op_pos+2], row_count, cell_count-1);
+				printf("%X %d %d \n", (*table_op_addr_cont)[addr_row_count-1][op_pos], row_count, cell_count-1);
 			}
 
 			printf("%X %d %d \n", (*table_op_addr_cont)[addr_row_count-1][op_pos+1], row_count, cell_count);
@@ -339,7 +342,7 @@ static int check_valid_string(const xmlChar *string)
 
 int free_xml_table(int ***xml_table_ptr)
 {
-    for(int i=addr_row_count;i!=0;i--){
+    for(int i=0;i<addr_row_count;i++){
 //        printf("%d/%d/Value:%X\n",i,addr_row_count-1, (*xml_table_ptr)[i]);
         free((*xml_table_ptr)[i]);
     }
@@ -348,3 +351,4 @@ int free_xml_table(int ***xml_table_ptr)
 
     return 0;
 }
+
