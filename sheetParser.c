@@ -17,7 +17,6 @@ int main(int argc, char *argv[])
 
     int **xml_table = streamDoc(xml_content);
 
-    printf("%X\n",xml_table[3][0]);
 
     free_xml_table(&xml_table);
 
@@ -45,7 +44,7 @@ char *read_zip_content(char *zip_name)
     zip_file_t *f_content = zip_fopen(z_file, f_to_read, ZIP_FL_UNCHANGED);
     if(f_content == NULL) {fputs("Cannot open content file", stderr);}
 
-    content_data = malloc(sizeof(char)*content_stat.size + 1);
+    content_data = calloc(sizeof(char), content_stat.size + 1);
 
     zip_fread(f_content, content_data, content_stat.size);
 
