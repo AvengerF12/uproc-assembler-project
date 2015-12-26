@@ -9,13 +9,22 @@
 #include <zip.h>
 
 
+int print_help();
 char *read_zip_content(char *);
 
 
 int main(int argc, char *argv[])
 {
+    char * i_file = argv[1];
+    char * o_file = argv[2];
 
-    char *xml_content = read_zip_content(argv[1]);
+    if(argc < 3){
+        print_help();
+        exit(1);
+    }
+
+
+    char *xml_content = read_zip_content(i_file);
 
     struct opcode_table *xml_table = streamDoc(xml_content);
 
@@ -45,12 +54,23 @@ int main(int argc, char *argv[])
 
     hex_buffer[buffer_size*2-1] = '\0';
 
-    hex_to_bin(argv[2], hex_buffer);
+    hex_to_bin(o_file, hex_buffer);
 
     free(hex_buffer);
 
     free_xml_table(&xml_table);
     free(xml_content);
+
+    printf("Done.\n");
+
+    return 0;
+}
+
+
+int print_help()
+{
+    printf("Incorrect arguments. Insert an option (-d to decrypt and -e to encrypt),\
+            followed by the input file and the output file\n");
 
     return 0;
 }
