@@ -1,2 +1,2 @@
-int **streamDoc(char *xml_buffer);
-int free_xml_table(int ***xml_table_ptr);
+struct opcode_table *streamDoc(char *xml_buffer);
+int free_xml_table(struct opcode_table **);

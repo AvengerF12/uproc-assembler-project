@@ -5,14 +5,17 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "struct.h"
+
 #define N_OP_ADD_CELLS 9
 #define MAX_N_TABLES 1
 #define MAX_REPEAT_ALLOWED 100
 
 
-int **streamDoc(char *xml_buffer);
-int free_xml_table(int ***xml_table_ptr);
-static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont);
+struct opcode_table *streamDoc(char *xml_buffer);
+int free_xml_table(struct opcode_table **xml_content);
+
+static int processNode(xmlTextReaderPtr reader, struct opcode_table *xml_content);
 static int read_next_text_elem(xmlTextReaderPtr reader);
 static int get_text_value(xmlTextReaderPtr xml_reader);
 static int get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute);
@@ -28,16 +31,18 @@ static int table_count = 0;
 static int cell_count = 0;
 static int row_count = 0;
 
-static int addr_row_count = 0;
 static int row_is_valid = 0;
 
 
 // Parses each element of the first xml table
-int **streamDoc(char *xml_buffer) {
+struct opcode_table *streamDoc(char *xml_buffer) {
 	
 	xmlDoc *doc = xmlReadMemory(xml_buffer, strlen(xml_buffer) * sizeof(char), "content.xml", NULL, 0);
 
-	int **table_op_addr_cont= NULL;
+    struct opcode_table *content = malloc(sizeof(struct opcode_table));
+    content->xml_table_content = NULL;
+    content -> n_cell_per_row = N_OP_ADD_CELLS;
+    content -> addr_row_count = 0;
 
     xmlTextReaderPtr reader;
     int ret;
@@ -56,7 +61,7 @@ int **streamDoc(char *xml_buffer) {
 				break;
 			}
 
-            stop_bit = processNode(reader, &table_op_addr_cont);
+            stop_bit = processNode(reader, content);
             ret = xmlTextReaderRead(reader);
         }   
 
@@ -74,12 +79,16 @@ int **streamDoc(char *xml_buffer) {
 
     xmlCleanupParser();
 
+    table_count = 0;
+    cell_count = 0;
+    row_count = 0;
+    row_is_valid = 0;
 
-	return table_op_addr_cont;
+	return content;
 }
 
 
-static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
+static int processNode(xmlTextReaderPtr reader, struct opcode_table *xml_content)
 {
     const xmlChar *name;
 	int type = xmlTextReaderNodeType(reader);
@@ -138,28 +147,28 @@ static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
             
 				row_is_valid = 1;
 
-            	addr_row_count++;
+                xml_content -> addr_row_count++;
             	// Increase the size of the array for each line with a valid address code
-            	int **temp_p = realloc(*table_op_addr_cont, sizeof(int*)*addr_row_count);
+            	int **temp_p = realloc(xml_content -> xml_table_content, sizeof(int*)*xml_content -> addr_row_count);
 
                 if(temp_p == NULL){
                     fprintf(stderr, "Unexpected behaviour: realloc");
-                    free_xml_table(table_op_addr_cont);
+                    free_xml_table(&xml_content);
                     exit(4);
                 }
 
-            	temp_p[addr_row_count-1] = malloc(row_size);
+            	temp_p[xml_content -> addr_row_count-1] = malloc(row_size);
 
                 // Initialise integers
                 for(int i=0;i<N_OP_ADD_CELLS;i++){
-                    temp_p[addr_row_count-1][i] = 0;
+                    temp_p[xml_content -> addr_row_count-1][i] = 0;
                 }
 
-            	*table_op_addr_cont = temp_p;
+            	xml_content -> xml_table_content = temp_p;
 
             	// Registers new value in the table
-            	(*table_op_addr_cont)[addr_row_count-1][table_addr_cell-1] = value;
-            	printf("a:%X %d %d\n",(*table_op_addr_cont)[addr_row_count-1][table_addr_cell-1], row_count, cell_count);
+            	(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][table_addr_cell-1] = value;
+            	printf("a:%X %d %d\n",(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][table_addr_cell-1], row_count, cell_count);
 			}
         }	
 
@@ -179,7 +188,7 @@ static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
 				exit(3);
             }
 
-        	(*table_op_addr_cont)[addr_row_count-1][op_pos+1] = value;
+        	(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos+1] = value;
 
 
 			// If the column is repeated in the opcode section then first write the second number and then the first
@@ -189,13 +198,13 @@ static int processNode(xmlTextReaderPtr reader, int ***table_op_addr_cont)
 
 //				printf("Calling 2: %d %d\n", op_pos, attr_value);
 				// Write first number of the two that compose the opcode
-				(*table_op_addr_cont)[addr_row_count-1][op_pos] = value;
+				(xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos] = value;
 
 
-				printf("%X %d %d \n", (*table_op_addr_cont)[addr_row_count-1][op_pos], row_count, cell_count-1);
+				printf("%X %d %d \n", (xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos], row_count, cell_count-1);
 			}
 
-			printf("%X %d %d \n", (*table_op_addr_cont)[addr_row_count-1][op_pos+1], row_count, cell_count);
+			printf("%X %d %d \n", (xml_content -> xml_table_content)[xml_content -> addr_row_count-1][op_pos+1], row_count, cell_count);
 
 		}
 	}
@@ -338,14 +347,16 @@ static int check_valid_string(const xmlChar *string)
 }
 
 
-int free_xml_table(int ***xml_table_ptr)
+int free_xml_table(struct opcode_table **xml_content)
 {
-    for(int i=0;i<addr_row_count;i++){
+    for(int i=0;i<(*xml_content)->addr_row_count;i++){
 //        printf("%d/%d/Value:%X\n",i,addr_row_count-1, (*xml_table_ptr)[i]);
-        free((*xml_table_ptr)[i]);
+        free((*xml_content)->xml_table_content[i]);
     }
 
-    free(*xml_table_ptr);
+    free((*xml_content)->xml_table_content);
+
+    free(*xml_content);
 
     return 0;
 }
