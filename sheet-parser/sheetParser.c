@@ -9,6 +9,7 @@
 #include <zip.h>
 
 
+int test_grid_layout(char *buffer);
 int print_help();
 char *read_zip_content(char *);
 
@@ -52,7 +53,8 @@ int main(int argc, char *argv[])
 
         // Handles the difference between adjacent address codes and fills the space with 0s
         if(i>0 && xml_table->xml_table_content[i][0] != (xml_table->xml_table_content[i-1][0]+1)){
-            addr_diff = xml_table->xml_table_content[i][0] - xml_table->xml_table_content[i-1][0];
+            // -1 needed because we need to find the number of numbers skipped before the current one
+            addr_diff = xml_table->xml_table_content[i][0] - 1 - xml_table->xml_table_content[i-1][0];
 
             // Add as many lines of 0s as the difference between the last two adresses
             for(int j=0;j<addr_diff;j++){
@@ -88,6 +90,8 @@ int main(int argc, char *argv[])
 
     hex_buffer[buffer_size*2-1] = '\0';
 
+    test_grid_layout(hex_buffer);
+
     hex_to_bin(o_file, hex_buffer);
 
     free(hex_buffer);
@@ -105,6 +109,27 @@ int print_help()
 {
     printf("Incorrect arguments. Insert an option (-d to decrypt and -e to encrypt),\
             followed by the input file and the output file\n");
+
+    return 0;
+}
+
+
+int test_grid_layout(char *buffer)
+{
+    for(int i=0;buffer[i]!='\0';i++){
+
+        if(buffer[i]=='\n'){
+            printf(" ", buffer[i]);
+        } else {
+            printf("%c", buffer[i]);
+        }
+
+        if((i%(16*9))==0){
+            printf("\n");
+        }
+    }
+
+    printf("\n");
 
     return 0;
 }
