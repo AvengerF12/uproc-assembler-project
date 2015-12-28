@@ -31,13 +31,45 @@ int main(int argc, char *argv[])
     int row_count = xml_table->addr_row_count;
     int cell_per_row = xml_table->n_cell_per_row;
 
-    int buffer_size = row_count * cell_per_row;
+    int addr_diff = 0;
+
+
+    // The size of the buffer is equal to the last address number by the number of cells per row
+    int buffer_size = xml_table->xml_table_content[row_count-1][0] * cell_per_row;
     int buffer_index = 0;
     char *hex_buffer = calloc(sizeof(char) + 1, buffer_size); // + 1 is needed for '\0' and spaces between numbers
 
 
     // Convert the table into a single string of values
     for(int i=0;i<row_count;i++){
+
+        addr_diff = 0;
+
+        // Handles address code repetition on the first column of the spreadsheet
+        if(i>0 && xml_table->xml_table_content[i][0] == xml_table->xml_table_content[i-1][0]){
+            fprintf(stderr, "Warning: repeated addr row skipped. Check address code %X.\n", xml_table->xml_table_content[i][0]);
+            continue;
+        }
+
+        // Handles the difference between adjacent address codes and fills the space with 0s
+        if(i>0 && xml_table->xml_table_content[i][0] != (xml_table->xml_table_content[i-1][0]+1)){
+            addr_diff = xml_table->xml_table_content[i][0] - xml_table->xml_table_content[i-1][0];
+            addr_diff--;
+            for(int j=0;j<addr_diff;j++){
+                for(int l=0;l<9;l++){
+                    if(l == 0)
+                        hex_buffer[buffer_index+j*9+l] = '\n';
+                    else
+                        hex_buffer[buffer_index+j*9+l] = '0';
+                    
+                }
+                
+            }
+
+            buffer_index += addr_diff*9;
+            
+        } 
+
         for(int k=0;k<cell_per_row;k++){
             if(k==0){
                 hex_buffer[buffer_index] = '\n';
@@ -50,6 +82,7 @@ int main(int argc, char *argv[])
 
             buffer_index++;
         }
+
     }
 
     hex_buffer[buffer_size*2-1] = '\0';
