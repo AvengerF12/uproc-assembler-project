@@ -34,7 +34,12 @@ static int row_count = 0;
 static int row_is_valid = 0;
 
 
-// Parses each element of the first xml table
+/* Parses each element of the first xml table that it founds.
+ * Checks whether a row is valid or not by parsing the table_addr_cell.
+ * If valid it retrieves the numbers in the table_opcode_cell[] positions, otherwise it skips the row.
+ * It stores all of the data required inside an opcode_table struct and finally it returns it to the caller.
+*/
+
 struct opcode_table *streamDoc(char *xml_buffer) {
 	
 	xmlDoc *doc = xmlReadMemory(xml_buffer, strlen(xml_buffer) * sizeof(char), "content.xml", NULL, 0);
