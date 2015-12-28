@@ -43,7 +43,6 @@ int main(int argc, char *argv[])
     // Convert the table into a single string of values
     for(int i=0;i<row_count;i++){
 
-        addr_diff = 0;
 
         // Handles address code repetition on the first column of the spreadsheet
         if(i>0 && xml_table->xml_table_content[i][0] == xml_table->xml_table_content[i-1][0]){
@@ -54,19 +53,21 @@ int main(int argc, char *argv[])
         // Handles the difference between adjacent address codes and fills the space with 0s
         if(i>0 && xml_table->xml_table_content[i][0] != (xml_table->xml_table_content[i-1][0]+1)){
             addr_diff = xml_table->xml_table_content[i][0] - xml_table->xml_table_content[i-1][0];
-            addr_diff--;
+
+            // Add as many lines of 0s as the difference between the last two adresses
             for(int j=0;j<addr_diff;j++){
-                for(int l=0;l<9;l++){
+                for(int l=0;l<cell_per_row;l++){
                     if(l == 0)
-                        hex_buffer[buffer_index+j*9+l] = '\n';
+                        hex_buffer[buffer_index+j*cell_per_row+l] = '\n';
                     else
-                        hex_buffer[buffer_index+j*9+l] = '0';
+                        hex_buffer[buffer_index+j*cell_per_row+l] = '0';
                     
                 }
                 
             }
 
-            buffer_index += addr_diff*9;
+            buffer_index += addr_diff*cell_per_row;
+            addr_diff = 0;
             
         } 
 
