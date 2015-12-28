@@ -94,6 +94,8 @@ int hex_to_bin(char *o_file_name, char *i_buffer)
 
     file_write_b(o_file_name, o_buffer, n_hex);
 
+    free(o_buffer);
+
     return 0;
 }
 
