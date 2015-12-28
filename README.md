@@ -15,6 +15,7 @@ Automatises the retrieval of some values from a spreadsheet in order to avoid th
 ### Usage
     
     Give the spreadsheet file as the first argument and the file in which to redirect the output as the second argument.
+    In order to work the spreadsheet must be kept consistent with the target one, in particular the column containing the address number and the ones containing the opcodes. If these positions change, the constants in xmlParser.h must be changed accordingly.
 
     Ex ./sheetParser spreadsheet.ods output.bin
 
