@@ -90,8 +90,6 @@ int main(int argc, char *argv[])
 
     hex_buffer[buffer_size*2-1] = '\0';
 
-    test_grid_layout(hex_buffer);
-
     hex_to_bin(o_file, hex_buffer);
 
     free(hex_buffer);
