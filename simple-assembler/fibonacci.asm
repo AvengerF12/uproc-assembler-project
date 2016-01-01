@@ -8,7 +8,7 @@ MOV [DE], 1	;
 MOV [DD], [DE]  ;
 MOV [DE], [DD]  ;
 
-JMP 6		    ;
+JMP 6		;
 
 END             ;
 
