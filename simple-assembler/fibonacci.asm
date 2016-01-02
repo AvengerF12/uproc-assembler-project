@@ -5,8 +5,8 @@ MOV [DE], 1	;
 
 label:
 
-MOV [DD], [DE]  ;
-MOV [DE], [DD]  ;
+ADD [DD], [DE]  ;
+ADD [DE], [DD]  ;
 
 JMP label	;
 
