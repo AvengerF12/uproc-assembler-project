@@ -1,14 +1,14 @@
 // Fibonacci sequence program
 
-START           ;
-
 MOV [DD], 0	;
 MOV [DE], 1	;
+
+label:
 
 MOV [DD], [DE]  ;
 MOV [DE], [DD]  ;
 
-JMP 6		;
+JMP label	;
 
 END             ;
 

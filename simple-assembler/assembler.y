@@ -7,8 +7,6 @@ extern void yyerror (char *);
 
 %}
 
-%error-verbose;
-
 // the different types of tokens we want to return
 %union {
 int int_token;
@@ -16,8 +14,8 @@ char *str_token;
 }
 
 // list the different tokens of each type
-%token <int_token> INT ADDR SEMICOLON COMMA
-%token <str_token> START END MOV JMP
+%token <int_token> INT ADDR SEMICOLON COLON COMMA
+%token <str_token> STRING END MOV JMP
 
 // indicate which of the below nodes is the root of the parse tree
 %start root_node
@@ -26,28 +24,26 @@ char *str_token;
 
 root_node : instructions;
 
-instructions : /*empty*/
-             | instructions instruction_node
+instructions : instructions instruction_node
              | instruction_node;
-
-start_node : START SEMICOLON
-{printf (" parsed a start node!\n");};
 
 instruction_node : mov_atoa_instruction
                 | mov_itoa_instruction
                 | jmp_instruction
-                | start_node
+                | label_instruction
                 | end_node ;
 
+label_instruction : STRING COLON
+{printf ("Parsed a label!\n");};
+
 mov_atoa_instruction : MOV ADDR COMMA ADDR SEMICOLON
-{printf (" parsed a mov_atoa!\n");};
+{printf ("Parsed a mov_atoa!\n");};
 
 mov_itoa_instruction : MOV ADDR COMMA INT SEMICOLON
-{printf (" parsed a mov_itoa!\n");};
+{printf ("Parsed a mov_itoa!\n");};
 
-jmp_instruction : JMP INT SEMICOLON
-{printf (" parsed a jmp!\n");};
-
+jmp_instruction : JMP STRING SEMICOLON
+{printf ("Parsed a jmp!\n");};
 
 end_node : END SEMICOLON
-{printf (" parsed an end node !\n"); exit (0);};
+{printf ("Parsed an end node !\n"); exit (0);};
