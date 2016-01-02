@@ -1,8 +1,8 @@
 C=gcc
 CFLAGS=-I.
 
-parsermake:
+assembler-make: 
 	bison -d assembler.y
 	flex assembler.l
-	$(C) -Wall -lfl -o assembler lex.yy.c assembler.tab.c
+	$(C) -Wall -lfl -o assembler lex.yy.c assembler.tab.c $(CFLAGS)
 	rm lex.yy.c assembler.tab.c assembler.tab.h

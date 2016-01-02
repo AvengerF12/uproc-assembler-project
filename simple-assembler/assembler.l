@@ -12,7 +12,7 @@
 "[" return O_BRACKET;
 "]" return C_BRACKET;
 
-\/\/[[:blank:][:alnum:]]+\n ; // Comment
+\/\/[[:blank:][:alnum:]]+\n ; // Comment: do nothing
 
 "MOV" return MOV;
 "ADD" return ADD;
