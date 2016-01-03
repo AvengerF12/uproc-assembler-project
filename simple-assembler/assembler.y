@@ -9,14 +9,14 @@ void yyerror (char *);
 
 extern FILE * yyin;
 
-int *instr_buffer = NULL;
+int8_t *instr_buffer = NULL;
 int buffer_size = 0;
 
 %}
 
 // the different types of tokens we want to return
 %union {
-int int_token;
+int8_t int_token;
 char *str_token;
 }
 
@@ -48,18 +48,15 @@ free($1);};
 add_atoa_instruction : ADD O_BRACKET INT C_BRACKET COMMA O_BRACKET INT C_BRACKET SEMICOLON
 {
     printf ("Parsed a add_atoa! 70: %X %X \n", $3, $7);     
-    int instr_array[3] = {0x70, $3, $7}; // ADD opcode + 1st argument + 2nd argument
-    append_int_buffer(&instr_buffer, instr_array, buffer_size, 3);
-    buffer_size += 3;
-
+    int8_t instr_array[3] = {0x70, $3, $7}; // ADD opcode + 1st argument + 2nd argument
+    append_int_buffer(&instr_buffer, instr_array, &buffer_size, 3);
 };
 
 mov_itoa_instruction : MOV O_BRACKET INT C_BRACKET COMMA INT SEMICOLON
 {
     printf ("Parsed a mov_itoa! A0: %X %X\n", $3, $6);
-    int instr_array[3] = {0xA0, $3, $6}; // ADD opcode + 1st argument + 2nd argument
-    append_int_buffer(&instr_buffer, instr_array, buffer_size, 3);
-    buffer_size += 3;
+    int8_t instr_array[3] = {0xA0, $3, $6}; // ADD opcode + 1st argument + 2nd argument
+    append_int_buffer(&instr_buffer, instr_array, &buffer_size, 3);
 };
 
 jmp_instruction : JMP STRING SEMICOLON
@@ -79,8 +76,6 @@ end_instruction : END SEMICOLON
 
 
 void yyerror (char * str) { printf (" ERROR : Could not parse !\n" );}
-
-int yywrap () { }
 
 
 int main (int argc, char *argv[]) {
@@ -102,7 +97,9 @@ int main (int argc, char *argv[]) {
 
     fclose(in_file);
 
-    file_write_b(argv[2], instr_buffer, buffer_size);
+    file_write_b(argv[2], instr_buffer, sizeof(int8_t), buffer_size);
+
+    free(instr_buffer);
 
     return 0;
 }

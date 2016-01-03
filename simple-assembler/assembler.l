@@ -4,6 +4,8 @@
 
 %}
 
+%option noyywrap
+
 %%
 
 ";" return SEMICOLON;
