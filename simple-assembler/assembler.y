@@ -11,6 +11,7 @@ extern FILE * yyin;
 
 int8_t *instr_buffer = NULL;
 int buffer_size = 0;
+int last_jump = 0;
 
 %}
 
@@ -42,8 +43,11 @@ instruction_node : add_atoa_instruction
 
 
 label_instruction : STRING COLON
-{printf ("Parsed a label! Name: %s\n", $1);
-free($1);};
+{
+    printf ("Parsed a label! Name: %s\n", $1);
+    last_jump = buffer_size;
+    free($1);
+};
 
 add_atoa_instruction : ADD O_BRACKET INT C_BRACKET COMMA O_BRACKET INT C_BRACKET SEMICOLON
 {
@@ -62,6 +66,8 @@ mov_itoa_instruction : MOV O_BRACKET INT C_BRACKET COMMA INT SEMICOLON
 jmp_instruction : JMP STRING SEMICOLON
 {
     printf ("Parsed a jmp! 50: %s\n", $2);
+    int8_t instr_array[3] = {0x50, last_jump};
+    append_int_buffer(&instr_buffer, instr_array, &buffer_size, 2);
     free($2);
 };
 
