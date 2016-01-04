@@ -188,6 +188,7 @@ int free_label_queue(label ***queue, int n_queue)
 {
     for(int i=0;i<n_queue;i++){
         free(((*queue)[i])->name);
+        free((*queue)[i]);
     }
 
     free(*queue);
