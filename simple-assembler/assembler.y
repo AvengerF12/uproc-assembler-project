@@ -2,7 +2,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "assembler_func.c"
+
+#include "assembler_func.h"
 
 int yylex();
 void yyerror (char *);
