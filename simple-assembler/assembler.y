@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "assembler_func.h"
 
@@ -10,11 +11,17 @@ void yyerror (char *);
 
 int create_instr_buffer(instruction **queue, int n_queue, int8_t **buffer);
 int free_instr_queue(instruction ***queue, int n_queue);
+int check_label_name(label **queue, int n_queue, char *label_name);
+int find_n_bytes_used(instruction **queue, int cur_pos);
+int free_label_queue(label ***queue, int n_queue);
 
 extern FILE * yyin;
 
 instruction **instr_queue = NULL;
+label **label_queue = NULL;
+
 int instr_count = 0;
+int label_count = 0;
 
 %}
 
@@ -48,13 +55,17 @@ instruction_node : add_atoa_instruction
 label_instruction : STRING COLON
 {
     printf ("Parsed a label! Name: %s\n", $1);
-//    last_jump = buffer_size;
-    free($1);
+
+    label_count++;
+    label_queue = safe_realloc(label_queue, label_count*sizeof(label));
+    int cur_pos_ram = find_n_bytes_used(instr_queue, instr_count);
+    label_queue[label_count-1] = create_new_label($1, cur_pos_ram);
 };
 
 add_atoa_instruction : ADD O_BRACKET INT C_BRACKET COMMA O_BRACKET INT C_BRACKET SEMICOLON
 {
     printf ("Parsed a add_atoa! 70: %X %X \n", $3, $7);     
+
     int8_t args[] = {$3, $7};
     instr_count++;
     instr_queue = safe_realloc(instr_queue, instr_count*sizeof(instruction));
@@ -64,6 +75,7 @@ add_atoa_instruction : ADD O_BRACKET INT C_BRACKET COMMA O_BRACKET INT C_BRACKET
 mov_itoa_instruction : MOV O_BRACKET INT C_BRACKET COMMA INT SEMICOLON
 {
     printf ("Parsed a mov_itoa! A0: %X %X\n", $3, $6);
+
     int8_t args[] = {$3, $6};
     instr_count++;
     instr_queue = safe_realloc(instr_queue, instr_count*sizeof(instruction));
@@ -74,9 +86,15 @@ mov_itoa_instruction : MOV O_BRACKET INT C_BRACKET COMMA INT SEMICOLON
 jmp_instruction : JMP STRING SEMICOLON
 {
     printf ("Parsed a jmp! 50: %s\n", $2);
-//    int8_t args[] = {last_jump};
-//    append_int_buffer(&instr_buffer, instr_array, &buffer_size, 2);
-    free($2);
+    int result = check_label_name(label_queue, label_count, $2);
+    
+    if(result != -1){
+        
+        int8_t args[] = {(label_queue[result])->cur_pos};
+        instr_count++;
+        instr_queue = safe_realloc(instr_queue, instr_count*sizeof(instruction));
+        instr_queue[instr_count-1] = create_new_instr(0x50, args, sizeof(args)/sizeof(int8_t));
+    }
 };
 
 end_instruction : END SEMICOLON
@@ -111,6 +129,7 @@ int main (int argc, char *argv[]) {
 
     fclose(in_file);
 
+
     int8_t *instr_buffer = NULL;
 
     int buffer_len = create_instr_buffer(instr_queue, instr_count, &instr_buffer);
@@ -118,6 +137,8 @@ int main (int argc, char *argv[]) {
     file_write_b(argv[2], instr_buffer, sizeof(int8_t), buffer_len);
 
     free_instr_queue(&instr_queue, instr_count);
+
+    free_label_queue(&label_queue, label_count);
 
     free(instr_buffer);
 
@@ -162,4 +183,43 @@ int free_instr_queue(instruction ***queue, int n_queue)
     return 0;
 }
 
+
+int free_label_queue(label ***queue, int n_queue)
+{
+    for(int i=0;i<n_queue;i++){
+        free(((*queue)[i])->name);
+    }
+
+    free(*queue);
+
+    return 0;
+}
+
+
+int check_label_name(label **queue, int n_queue, char *label_name)
+{
+    for(int i=0;i<n_queue;i++){
+        int cmp_result = strcmp((queue[i])->name, label_name);
+
+        if(cmp_result == 0){
+            free(label_name);
+            
+            return i;
+        }
+    }
+
+    return -1; // There was no label with that name
+}
+
+
+int find_n_bytes_used(instruction **queue, int cur_pos)
+{
+    int tot_amount = 0;
+
+    for(int i=0;i<cur_pos;i++){
+        tot_amount += (queue[i])->n_args + 1;
+    }
+
+    return tot_amount;
+}
 

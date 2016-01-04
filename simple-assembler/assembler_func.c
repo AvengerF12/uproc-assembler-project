@@ -3,10 +3,7 @@
 
 #include "assembler_func.h"
 
-int file_write_b(char *o_file_name, int8_t *buffer, size_t size, size_t count);
 void *safe_realloc (void* ptr, size_t new_size);
-int append_int_buffer(int8_t **old_buffer, int8_t *to_append_buffer, int *buffer_size, int append_size);
-instruction *create_new_instr(int8_t instr_opcode, int8_t *instr_args, int instr_n_args);
 
 
 int file_write_b(char *o_file_name, int8_t *buffer, size_t size, size_t count)
@@ -65,4 +62,20 @@ int free_instr(instruction **to_del)
 
     return 0;
 }
+
+
+label *create_new_label(char *label_name, int label_pos)
+{
+    label *new_label = NULL;
+
+    new_label = malloc(sizeof(label));
+
+    new_label->name = label_name;
+
+    new_label->cur_pos = label_pos;
+
+    return new_label;
+
+}
+
 
