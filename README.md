@@ -26,7 +26,7 @@ Automatises the retrieval of some values from a spreadsheet in order to avoid th
 
 ## Uproc Assembler
 
-Automatises the retrieval of some values from a spreadsheet in order to avoid the tedious task of copying them manually every time there is a change.
+Takes a text file containing the assembly code for the 8-bit cpu and converts it into machine code.
     
 ### Dependencies
 
@@ -34,10 +34,9 @@ Automatises the retrieval of some values from a spreadsheet in order to avoid th
 
 ### Usage
     
-    Take a text file containing the assembly code for the 8-bit cpu and convert it into machine code.
-    For the full set of machine instructions available check the according spreadsheet.
+    For the full set of machine instructions available check the spreadsheet.
     
-    For now the instruction's address in ROM is hardcoded.
+    For now the instruction's address is hardcoded.
 
     Ex:
     make; ./assembler code.asm output.bin;
