@@ -1,6 +1,6 @@
 #include "xmlParser.h"
 #include "hexConverter.h"
-#include "struct.h"
+
 
 #include <stdio.h>
 #include <stdlib.h>

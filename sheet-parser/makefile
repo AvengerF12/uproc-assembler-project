@@ -1,6 +1,6 @@
 C=gcc
 CFLAGS=-I.
-DEPS = xmlParser.h hexConverter.h struct.h
+DEPS = xmlParser.h hexConverter.h
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "struct.h"
+#include "xmlParser.h"
 
 #define N_OP_ADD_CELLS 9
 #define MAX_N_TABLES 1
