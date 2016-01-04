@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 
     char *xml_content = read_zip_content(i_file);
 
-    struct opcode_table *xml_table = streamDoc(xml_content);
+    opcode_table *xml_table = streamDoc(xml_content);
 
     int row_count = xml_table->addr_row_count;
     int cell_per_row = xml_table->n_cell_per_row;

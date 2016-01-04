@@ -12,10 +12,10 @@
 #define MAX_REPEAT_ALLOWED 100
 
 
-struct opcode_table *streamDoc(char *xml_buffer);
-int free_xml_table(struct opcode_table **xml_content);
+opcode_table *streamDoc(char *xml_buffer);
+int free_xml_table(opcode_table **xml_content);
 
-static int processNode(xmlTextReaderPtr reader, struct opcode_table *xml_content);
+static int processNode(xmlTextReaderPtr reader, opcode_table *xml_content);
 static int read_next_text_elem(xmlTextReaderPtr reader);
 static int get_text_value(xmlTextReaderPtr xml_reader);
 static int get_attr_value_i(xmlTextReaderPtr reader, xmlChar *attribute);
@@ -40,11 +40,11 @@ static int row_is_valid = 0;
  * It stores all of the data required inside an opcode_table struct and finally it returns it to the caller.
 */
 
-struct opcode_table *streamDoc(char *xml_buffer) {
+opcode_table *streamDoc(char *xml_buffer) {
 	
 	xmlDoc *doc = xmlReadMemory(xml_buffer, strlen(xml_buffer) * sizeof(char), "content.xml", NULL, 0);
 
-    struct opcode_table *content = malloc(sizeof(struct opcode_table));
+    opcode_table *content = malloc(sizeof(opcode_table));
     content->xml_table_content = NULL;
     content -> n_cell_per_row = N_OP_ADD_CELLS;
     content -> addr_row_count = 0;
@@ -93,7 +93,7 @@ struct opcode_table *streamDoc(char *xml_buffer) {
 }
 
 
-static int processNode(xmlTextReaderPtr reader, struct opcode_table *xml_content)
+static int processNode(xmlTextReaderPtr reader, opcode_table *xml_content)
 {
     const xmlChar *name;
 	int type = xmlTextReaderNodeType(reader);
@@ -351,7 +351,7 @@ static int check_valid_string(const xmlChar *string)
 }
 
 
-int free_xml_table(struct opcode_table **xml_content)
+int free_xml_table(opcode_table **xml_content)
 {
     for(int i=0;i<(*xml_content)->addr_row_count;i++){
         free((*xml_content)->xml_table_content[i]);
