@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "assembler_func.h"
+
 int file_write_b(char *o_file_name, int8_t *buffer, size_t size, size_t count);
 void *safe_realloc (void* ptr, size_t new_size);
 int append_int_buffer(int8_t **old_buffer, int8_t *to_append_buffer, int *buffer_size, int append_size);
+instruction *create_new_instr(int8_t instr_opcode, int8_t *instr_args, int instr_n_args);
 
 
 int file_write_b(char *o_file_name, int8_t *buffer, size_t size, size_t count)
@@ -35,21 +38,30 @@ void *safe_realloc (void* ptr, size_t new_size)
 }
 
 
-int append_int_buffer(int8_t **old_buffer, int8_t *to_append_buffer, int *buffer_size, int append_size)
+instruction *create_new_instr(int8_t instr_opcode, int8_t *instr_args, int instr_n_args)
 {
-    // Allocate space required for all the new values
-    *old_buffer = safe_realloc(*old_buffer, (*buffer_size+append_size)*sizeof(int));
+    instruction *new_instr = NULL;
+    new_instr = malloc(sizeof(instruction));
 
-    // Add all the new values one at time
-    for(int i=0;i<append_size;i++){
-        (*old_buffer)[*buffer_size] = to_append_buffer[i];
+    new_instr->opcode = instr_opcode;
+    new_instr->n_args = instr_n_args;
 
-//        printf("SUP: %X %d\n", (*old_buffer)[*buffer_size], *buffer_size);
+    new_instr->args = malloc(sizeof(int8_t)*instr_n_args);
 
-        (*buffer_size)++;
-
+    for(int i=0;i<instr_n_args;i++){
+        (new_instr->args)[i] = instr_args[i];
     }
 
+    return new_instr;
+}
+
+
+int free_instr(instruction **to_del)
+{
+
+    free((*to_del)->args);
+
+    free(*to_del);
 
     return 0;
 }
