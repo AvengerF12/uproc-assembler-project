@@ -16,6 +16,7 @@
 
 \/\/[[:blank:][:alnum:]]+\n ; // Comment: do nothing
 
+"AX" return AX;
 "MOV" return MOV;
 "ADD" return ADD;
 "JMP" return JMP;

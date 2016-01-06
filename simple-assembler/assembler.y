@@ -32,7 +32,7 @@ char *str_token;
 }
 
 // list the different tokens of each type
-%token <int_token> INT O_BRACKET C_BRACKET SEMICOLON COLON COMMA
+%token <int_token> INT O_BRACKET C_BRACKET SEMICOLON COLON COMMA AX
 %token <str_token> STRING END MOV JMP ADD
 
 // indicate which of the below nodes is the root of the parse tree
@@ -49,6 +49,8 @@ instruction_node : add_atoa_instruction
                 | mov_itoa_instruction
                 | jmp_instruction
                 | label_instruction
+                | mov_itoax_instruction
+                | add_itoax_instruction
                 | end_instruction ;
 
 
@@ -95,6 +97,28 @@ jmp_instruction : JMP STRING SEMICOLON
         instr_queue = safe_realloc(instr_queue, instr_count*sizeof(instruction));
         instr_queue[instr_count-1] = create_new_instr(0x50, args, sizeof(args)/sizeof(int8_t));
     }
+};
+
+mov_itoax_instruction : MOV AX COMMA INT SEMICOLON
+                     {
+    printf ("Parsed a mov_itoax! 20: %X \n", $4);
+
+    int8_t args[] = {$4};
+    instr_count++;
+    instr_queue = safe_realloc(instr_queue, instr_count*sizeof(instruction));
+    instr_queue[instr_count-1] = create_new_instr(0x20, args, sizeof(args)/sizeof(int8_t));
+
+};
+
+add_itoax_instruction : ADD AX COMMA INT SEMICOLON
+                                           {
+    printf ("Parsed a add_itoax! 60: %X \n", $4);
+
+    int8_t args[] = {$4};
+    instr_count++;
+    instr_queue = safe_realloc(instr_queue, instr_count*sizeof(instruction));
+    instr_queue[instr_count-1] = create_new_instr(0x60, args, sizeof(args)/sizeof(int8_t));
+
 };
 
 end_instruction : END SEMICOLON
