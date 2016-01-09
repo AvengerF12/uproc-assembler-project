@@ -16,11 +16,11 @@
 
 \/\/[[:blank:][:alnum:]]+\n ; // Comment: do nothing
 
-"AX" return AX;
-"MOV" return MOV;
-"ADD" return ADD;
-"JMP" return JMP;
-"END" return END;
+"AX"|"ax" return AX;
+"MOV"|"mov" return MOV;
+"ADD"|"add" return ADD;
+"JMP"|"jmp" return JMP;
+"END"|"end" return END;
 
 [0-9A-Fa-f]+ { yylval.int_token = strtol(yytext, NULL, 16); return INT;}
 [A-Za-z]+ {
